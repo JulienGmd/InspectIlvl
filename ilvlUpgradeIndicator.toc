@@ -1,0 +1,7 @@
+## Interface: 100002
+## Version: 0.1.0
+## Title: iLvL Upgrade Indicator
+## Notes: Displays an indicator on items that are an ilvl upgrade for your current gear.
+## Author: Zéparti
+
+core.lua
