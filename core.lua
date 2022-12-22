@@ -1,3 +1,5 @@
+-- Arrow indicator on items in bags if ilvl is an upgrade
+
 -- After a bag is oppened or an item was moved in a bag
 EventRegistry:RegisterCallback("ItemButton.UpdateItemContextMatching", function(event, bagId)
   if IsCombinedBag() then
