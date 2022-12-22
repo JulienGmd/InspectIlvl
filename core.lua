@@ -2,7 +2,8 @@
 EventRegistry:RegisterCallback("ItemButton.UpdateItemContextMatching", function(event, bagId)
   if IsCombinedBag() then
 
-    -- Combined bags, all bags are oppened, so check all items of all bags
+    -- Blizzard's combined bags
+    -- All bags are oppened, so check all items of all bags
     for bagId = 0, 4 do -- Ignore the last bag (reagents)
       local numSlots = C_Container.GetContainerNumSlots(bagId)
       for slotId = 1, numSlots do
@@ -19,7 +20,8 @@ EventRegistry:RegisterCallback("ItemButton.UpdateItemContextMatching", function(
 
   else
 
-    -- Not combined bags, the event is called for a specific bag, check all items of this bag
+    -- Blizzard's bags
+    -- The event is called for a specific bag, check all items of this bag
     if bagId == 5 then return end -- Ignore the last bag (reagents)
     -- Here bagFrameId can't be deduced from the bagId,
     -- because bagFrameId depends on the order we open the bags
@@ -51,17 +53,23 @@ function IsILvlUpgrade(itemLink)
   if not itemLink then return false end
 
   local invSlotId = GetInvSlotId(itemLink)
-  -- If armor or weapon
-  if invSlotId and invSlotId >= 1 and invSlotId <= 18 then
-    local _, _, _, itemLevel = GetItemInfo(itemLink)
+  if invSlotId and invSlotId >= 1 and invSlotId <= 18 then -- If armor or weapon
+
+    local equippedItemLink = GetInventoryItemLink("player", invSlotId)
+    if not equippedItemLink then return true end -- If no item is equipped, then the item is an upgrade
+
+    local itemLevel = GetDetailedItemLevelInfo(itemLink)
     local equippedItemLevel = GetEquippedItemLevel(invSlotId)
+
     -- If ring, trinket or weapon, check both slots
-    if invSlotId == 11 or invSlotId == 13 or (invSlotId == 16 and not IsTwoHandedWeapon(itemLink)) then
+    if invSlotId == 11 or invSlotId == 13 or (invSlotId == 16 and Can16BeEquippedIn17(itemLink)) then
       local equippedItemLevel2 = GetEquippedItemLevel(invSlotId + 1)
       if equippedItemLevel2 < equippedItemLevel then
+        equippedItemLink = GetInventoryItemLink("player", invSlotId + 1)
         equippedItemLevel = equippedItemLevel2
       end
     end
+
     if itemLevel > equippedItemLevel then
       return true
     end
@@ -88,7 +96,7 @@ end
 function GetEquippedItemLevel(invSlotId)
   local itemLink = GetInventoryItemLink("player", invSlotId)
   if itemLink then
-    local _, _, _, itemLevel = GetItemInfo(itemLink)
+    local itemLevel = GetDetailedItemLevelInfo(itemLink)
     return itemLevel
   end
   return 0
@@ -110,15 +118,15 @@ local invSlotIds = {
   INVTYPE_TRINKET = 13,
   INVTYPE_CLOAK = 15,
   INVTYPE_WEAPON = 16,
-  INVTYPE_SHIELD = 17,
-  INVTYPE_RANGED = 18,
-  INVTYPE_2HWEAPON = 16,
   INVTYPE_WEAPONMAINHAND = 16,
+  INVTYPE_2HWEAPON = 16,
+  INVTYPE_RANGED = 16,
+  INVTYPE_RANGEDRIGHT = 16,
+  INVTYPE_THROWN = 16,
+  INVTYPE_RELIC = 16,
+  INVTYPE_SHIELD = 17,
   INVTYPE_WEAPONOFFHAND = 17,
   INVTYPE_HOLDABLE = 17,
-  INVTYPE_RANGEDRIGHT = 18,
-  INVTYPE_THROWN = 18,
-  INVTYPE_RELIC = 18,
 }
 
 -- Returns the inventory slot id where the item can be equipped (1 to 18)
@@ -131,12 +139,34 @@ function GetInvSlotId(itemLink)
   return nil
 end
 
-function IsTwoHandedWeapon(itemLink)
+function Can16BeEquippedIn17(itemLink)
+  -- Must be one-handed weapon
   local _, _, _, _, _, _, _, _, itemEquipLoc = GetItemInfo(itemLink)
-  if itemEquipLoc == "INVTYPE_2HWEAPON" then
-    return true
+  if itemEquipLoc ~= "INVTYPE_WEAPONMAINHAND" or itemEquipLoc ~= "INVTYPE_WEAPON" then
+    return false
   end
-  return false
+
+  -- A shield must not be equipped
+  local itemLink17 = GetInventoryItemLink("player", 17)
+  if itemLink17 then
+    local _, _, _, _, _, _, _, _, itemEquipLoc17 = GetItemInfo(itemLink17)
+    if itemEquipLoc17 == "INVTYPE_SHIELD" then
+      return false
+    end
+  end
+
+  -- 2H or ranged must not be equipped
+  local itemLink16 = GetInventoryItemLink("player", 16)
+  if itemLink16 then
+    local _, _, _, _, _, _, _, _, itemEquipLoc16 = GetItemInfo(itemLink16)
+    if itemEquipLoc16 == "INVTYPE_2HWEAPON" or
+        itemEquipLoc16 == "INVTYPE_RANGED" or
+        itemEquipLoc16 == "INVTYPE_RANGEDRIGHT" then
+      return false
+    end
+  end
+
+  return true
 end
 
 -- Show or create the arrow texture
@@ -156,3 +186,48 @@ function HideArrowTexture(itemFrame)
     itemFrame["ILvlUpgradeTex"]:Hide()
   end
 end
+
+--[[ -- Adibags support
+
+--TODO update à l'ouverture du sac (la ca update à chaque fois qu'un item bouge)
+--TODO marche pas
+EventRegistry:RegisterCallback("AdiBags_BagOpened", function(event, ...)
+  print("AdiBags_BagOpened")
+  UpdateAdiBagsItems()
+end)
+
+-- When an item has changed in a bag
+local function OnEvent(self, event, ...)
+  if event == "BAG_UPDATE" then
+    UpdateAdiBagsItems()
+  end
+end
+
+function UpdateAdiBagsItems()
+  -- Check if Adibags frame exists
+  if not _G["AdiBagsContainer1"] then return end
+
+  -- Loop through all Adibags item frames
+  local i = 0
+  while true do
+    local itemContainer = _G["AdiBagsItemContainer" .. i]
+    if not itemContainer then break end
+
+    local children = { itemContainer:GetChildren() }
+    for _, child in ipairs(children) do
+      if child:IsShown() then
+        local itemLink = child:GetItemLink()
+        if IsILvlUpgrade(itemLink) then
+          ShowArrowTexture(child)
+        else
+          HideArrowTexture(child)
+        end
+      end
+    end
+    i = i + 1
+  end
+end
+
+local f = CreateFrame("Frame")
+f:RegisterEvent("BAG_UPDATE")
+f:SetScript("OnEvent", OnEvent) ]]
