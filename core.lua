@@ -1,5 +1,10 @@
 -- Arrow indicator on items in bags if ilvl is an upgrade
 
+--TODO rajouter CanEquipItem (semble pas checker si war peut equiper maille)
+-- classArmorType et itemInventoryType
+-- local itemInventoryType = GetItemInventoryType(itemID)
+-- local _, _, _, classArmorType = GetClassInfo(classID)
+
 -- After a bag is oppened or an item was moved in a bag
 EventRegistry:RegisterCallback("ItemButton.UpdateItemContextMatching", function(event, bagId)
   if IsCombinedBag() then
@@ -28,6 +33,9 @@ EventRegistry:RegisterCallback("ItemButton.UpdateItemContextMatching", function(
     -- Here bagFrameId can't be deduced from the bagId,
     -- because bagFrameId depends on the order we open the bags
     local bagFrameId = GetBagFrameId(bagId)
+    -- If the bag is not oppened, do nothing
+    -- Can happen sometimes after leaving an instance with a bag oppened
+    if not bagFrameId then return end
     local numSlots = C_Container.GetContainerNumSlots(bagId)
     for slotId = 1, numSlots do
       local itemFrameId = numSlots - slotId + 1 -- Because the item frames are in reverse order

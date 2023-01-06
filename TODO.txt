@@ -1,0 +1,3 @@
+Ilvl sur les items dans le sac et dans l'inventaire
+
+arme a 1m : ds le sac est pas marqué meme si meilleure que celle en main gauche
