@@ -1,4 +1,4 @@
-## Interface: 100206
+## Interface: 110002
 ## Version: 1.0.0
 ## Title: Inspect iLvl
 ## Notes: Shows the iLvl in the inspect frame.
