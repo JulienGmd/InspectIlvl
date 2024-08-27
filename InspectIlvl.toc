@@ -3,5 +3,6 @@
 ## Title: Inspect iLvl
 ## Notes: Shows the iLvl in the inspect frame.
 ## Author: Zéparti
+## IconTexture: Interface\AddOns\InspectILvl\logo_small.png
 
 core.lua
