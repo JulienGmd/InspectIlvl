@@ -1,4 +1,5 @@
-## Interface: 110002
+# To know the version: /run print((select(4, GetBuildInfo())))
+## Interface: 110005
 ## Version: 1.0.0
 ## Title: Inspect iLvl
 ## Notes: Shows the iLvl in the inspect frame.
