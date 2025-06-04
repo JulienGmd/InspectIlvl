@@ -1,9 +1,10 @@
 # To know the version: /run print((select(4, GetBuildInfo())))
-## Interface: 110005
-## Version: 1.0.0
+## Interface: 110105
+## Version: 1.0.2
 ## Title: Inspect iLvl
+## Category: Information
 ## Notes: Shows the iLvl in the inspect frame.
-## Author: Zéparti
+## Author: Wdz
 ## IconTexture: Interface\AddOns\InspectILvl\logo_small.png
 
 core.lua
